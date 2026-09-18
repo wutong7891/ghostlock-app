@@ -612,7 +612,7 @@ static void apply_iomem_cache(void) {
 }
 
 static void write_root_script(void) {
-  char script[8192];
+  char script[12288];
   int sfd = open(g_root_script_path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
   if (sfd < 0) {
     pr_warning("open root script failed path=%s errno=%d\n",
@@ -629,6 +629,9 @@ static void write_root_script(void) {
       "echo \"[*] root script start uid=$(id -u) euid=$(id -u)\" >\"$LOG\"\n"
       "chmod 644 \"$LOG\" 2>/dev/null\n"
       "echo \"[*] seccomp=$(grep Seccomp /proc/self/status 2>/dev/null | tr '\\n' ' ')\" >>\"$LOG\"\n"
+      "if [ ! -x \"$KSUD\" ]; then\n"
+      "  KSUD=$(find /data/app -path '*/com.jinfuwei.luoyu-*/lib/arm64/libksud.so' 2>/dev/null | head -1)\n"
+      "fi\n"
       "if [ ! -x \"$KSUD\" ]; then\n"
       "  KSUD=$(find /data/app -path '*/me.weishu.kernelsu.pr*/lib/arm64/libksud.so' 2>/dev/null | head -1)\n"
       "fi\n"
@@ -735,8 +738,23 @@ static void write_root_script(void) {
       "  fi\n"
       "  echo \"[*] late-load kmi=$KMI as uid=$(id -u)\" >>\"$LOG\"\n"
       "  chmod 755 \"$KSUD\" 2>/dev/null\n"
-      "  \"$KSUD\" late-load --kmi \"$KMI\" --allow-shell >>\"$LOG\" 2>&1\n"
-      "  echo \"[*] late-load exit=$?\" >>\"$LOG\"\n"
+      "  YIPASU_KO=\"$HOME_DIR/yipasu_kernelsu.ko\"\n"
+      "  if [ -f \"$YIPASU_KO\" ]; then\n"
+      "    echo \"[*] loading certificate-matched YipaSU module: $YIPASU_KO\" >>\"$LOG\"\n"
+      "    \"$KSUD\" insmod \"$YIPASU_KO\" allow_shell=1 >>\"$LOG\" 2>&1\n"
+      "    INSMOD_RC=$?\n"
+      "    echo \"[*] YipaSU insmod exit=$INSMOD_RC\" >>\"$LOG\"\n"
+      "    if [ \"$INSMOD_RC\" -eq 0 ]; then\n"
+      "      \"$KSUD\" late-load --allow-shell --package-name com.jinfuwei.luoyu >>\"$LOG\" 2>&1\n"
+      "      LATELOAD_RC=$?\n"
+      "    else\n"
+      "      LATELOAD_RC=$INSMOD_RC\n"
+      "    fi\n"
+      "  else\n"
+      "    \"$KSUD\" late-load --kmi \"$KMI\" --allow-shell >>\"$LOG\" 2>&1\n"
+      "    LATELOAD_RC=$?\n"
+      "  fi\n"
+      "  echo \"[*] late-load exit=$LATELOAD_RC\" >>\"$LOG\"\n"
       "  KSU_READY=0\n"
       "  for i in $(seq 1 50); do\n"
       "    if grep -q kernelsu /proc/modules 2>/dev/null; then KSU_READY=1; break; fi\n"

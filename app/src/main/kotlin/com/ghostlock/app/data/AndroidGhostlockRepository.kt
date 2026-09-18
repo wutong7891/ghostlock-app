@@ -3,6 +3,7 @@ package com.ghostlock.app.data
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.MediaStore
 import android.system.Os
@@ -28,6 +29,7 @@ import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -38,6 +40,8 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
         const val OffsetsFileName = "offsets.json"
         const val KsuLogName = ".ghostlock_ksu.log"
         const val ExtractBinaryName = "libextract.so"
+        const val YipaSuPackage = "com.jinfuwei.luoyu"
+        const val YipaSuModuleName = "yipasu_kernelsu.ko"
     }
 
     private val appContext = context.applicationContext
@@ -473,7 +477,8 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
     private fun firstValidProperty(vararg keys: String): String? = keys.asSequence().firstNotNullOfOrNull { validDeviceName(systemProperty(it)) }
 
     private fun prepareKsud(workDir: File, onLog: (String) -> Unit): File? {
-        val packages = listOf("me.weishu.kernelsu.pr", "me.weishu.kernelsu", "com.resukisu.resukisu", "com.kowx712.supermanager")
+        File(workDir, YipaSuModuleName).delete()
+        val packages = listOf(YipaSuPackage, "me.weishu.kernelsu.pr", "me.weishu.kernelsu", "com.resukisu.resukisu", "com.kowx712.supermanager")
         var installed = false
         for (packageName in packages) {
             val appInfo = runCatching { appContext.packageManager.getApplicationInfo(packageName, 0) }.getOrNull() ?: continue
@@ -484,12 +489,57 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
             runCatching {
                 source.inputStream().use { input -> output.outputStream().use { input.copyTo(it) } }
                 runCatching { Os.chmod(output.absolutePath, 448) }
+                if (packageName == YipaSuPackage) prepareYipaSuModule(workDir, onLog)
                 return output
             }.onFailure { onLog("copy ksud failed: ${it.message}") }
         }
-        if (!installed) onLog("KernelSU/ReSukiSU/KowSU app not installed")
+        if (!installed) onLog("YipaSU/KernelSU/ReSukiSU/KowSU app not installed")
         return null
     }
+
+    private fun prepareYipaSuModule(workDir: File, onLog: (String) -> Unit) {
+        val release = System.getProperty("os.version", "").orEmpty()
+        val android = Regex("android\\d+").find(release)?.value
+        val kernel = Regex("^(\\d+\\.\\d+)").find(release)?.groupValues?.get(1)
+        if (android == null || kernel == null) {
+            onLog("YipaSU detected, but KMI could not be parsed from $release")
+            return
+        }
+        val kmi = "$android-$kernel"
+        val certHash = yipaSuCertificateHash()
+        if (certHash == null) {
+            onLog("YipaSU detected, but its signing certificate could not be read")
+            return
+        }
+        val asset = "yipasu-kmi/$certHash/${kmi}_kernelsu.ko"
+        val output = File(workDir, YipaSuModuleName)
+        runCatching {
+            appContext.assets.open(asset).use { input ->
+                output.outputStream().use { target -> input.copyTo(target) }
+            }
+            runCatching { Os.chmod(output.absolutePath, 420) }
+            onLog("YipaSU exclusive KMI ready: $kmi (${certHash.take(12)})")
+        }.onFailure {
+            output.delete()
+            onLog("YipaSU is installed, but this manager signature/KMI pair is not bundled: ${certHash.take(12)}/$kmi")
+        }
+    }
+
+    private fun yipaSuCertificateHash(): String? = runCatching {
+        val info = appContext.packageManager.getPackageInfo(
+            YipaSuPackage,
+            PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES.toLong()),
+        )
+        val signingInfo = checkNotNull(info.signingInfo)
+        val signatures = if (signingInfo.hasMultipleSigners()) {
+            signingInfo.apkContentsSigners
+        } else {
+            signingInfo.signingCertificateHistory
+        }
+        val certificate = checkNotNull(signatures.firstOrNull()).toByteArray()
+        MessageDigest.getInstance("SHA-256").digest(certificate)
+            .joinToString("") { byte -> "%02x".format(Locale.ROOT, byte.toInt() and 0xff) }
+    }.getOrNull()
 
     private suspend fun runProcess(
         builder: ProcessBuilder,

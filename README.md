@@ -58,7 +58,9 @@ Kernels are matched by exact `uname -r`; unsupported builds are rejected and the
 
 ## Quick Start
 
-Open **GhostLock** and tap **Run**. KernelSU (`me.weishu.kernelsu`), ReSukiSU (`com.resukisu.resukisu`), or KowSU (`com.kowx712.supermanager`) provides `ksud` for module loading; without it, W1/W2 still grant uid 0 but no module is loaded.
+Open **GhostLock** and tap **Run**. YipaSU (`com.jinfuwei.luoyu`), KernelSU (`me.weishu.kernelsu`), ReSukiSU (`com.resukisu.resukisu`), or KowSU (`com.kowx712.supermanager`) provides `ksud` for module loading; without it, W1/W2 still grant uid 0 but no module is loaded.
+
+This fork prefers YipaSU and bundles the certificate-bound KMI sets from the previously delivered and current YipaSU 3.2.5ksu builds. It hashes the installed YipaSU signing certificate, selects the matching module and current device KMI, loads that module with YipaSU's own `ksud`, then runs late-load initialization for `com.jinfuwei.luoyu`. Unknown future YipaSU signatures fall back to the manager's own embedded KMI behavior and are reported clearly in the run log.
 
 The route races two cores. On the 6.6/6.12 tree-waiter kernels the main thread hammers `select` while a consumer thread perturbs the waiter's priority; on the 6.1 compact-waiter kernels the main thread drives `getsockopt(TCP_ZEROCOPY_RECEIVE)` through a punched-hole page instead (`GHOSTLOCK_TCP_ROUTE=0` forces the pselect route). The pair defaults to the big cores (fallback 0/1), overridable via `GHOSTLOCK_CORE` / `GHOSTLOCK_CONSUMER_CORE`.
 
