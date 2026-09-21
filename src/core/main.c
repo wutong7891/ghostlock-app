@@ -612,7 +612,7 @@ static void apply_iomem_cache(void) {
 }
 
 static void write_root_script(void) {
-  char script[8192];
+  char script[12288];
   int sfd = open(g_root_script_path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
   if (sfd < 0) {
     pr_warning("open root script failed path=%s errno=%d\n",
@@ -629,6 +629,9 @@ static void write_root_script(void) {
       "echo \"[*] root script start uid=$(id -u) euid=$(id -u)\" >\"$LOG\"\n"
       "chmod 644 \"$LOG\" 2>/dev/null\n"
       "echo \"[*] seccomp=$(grep Seccomp /proc/self/status 2>/dev/null | tr '\\n' ' ')\" >>\"$LOG\"\n"
+      "if [ ! -x \"$KSUD\" ]; then\n"
+      "  KSUD=$(find /data/app -path '*/com.Night.night-*/lib/arm64/libksud.so' 2>/dev/null | head -1)\n"
+      "fi\n"
       "if [ ! -x \"$KSUD\" ]; then\n"
       "  KSUD=$(find /data/app -path '*/me.weishu.kernelsu.pr*/lib/arm64/libksud.so' 2>/dev/null | head -1)\n"
       "fi\n"
@@ -733,9 +736,18 @@ static void write_root_script(void) {
       "    echo '[!] ksud missing; cannot late-load' >>\"$LOG\"\n"
       "    exit 1\n"
       "  fi\n"
-      "  echo \"[*] late-load kmi=$KMI as uid=$(id -u)\" >>\"$LOG\"\n"
+      "  NIGHT_KO=\"$HOME_DIR/night-kmi/${KMI}_kernelsu.ko\"\n"
       "  chmod 755 \"$KSUD\" 2>/dev/null\n"
-      "  \"$KSUD\" late-load --kmi \"$KMI\" --allow-shell >>\"$LOG\" 2>&1\n"
+      "  if [ -f \"$NIGHT_KO\" ]; then\n"
+      "    echo \"[*] loading Night external KMI $NIGHT_KO\" >>\"$LOG\"\n"
+      "    \"$KSUD\" insmod \"$NIGHT_KO\" allow_shell=1 >>\"$LOG\" 2>&1\n"
+      "    echo \"[*] Night KMI insmod exit=$?\" >>\"$LOG\"\n"
+      "  else\n"
+      "    echo \"[!] Night KMI missing for $KMI\" >>\"$LOG\"\n"
+      "    exit 1\n"
+      "  fi\n"
+      "  echo \"[*] initializing Night manager as uid=$(id -u)\" >>\"$LOG\"\n"
+      "  \"$KSUD\" late-load --allow-shell --package-name com.Night.night >>\"$LOG\" 2>&1\n"
       "  echo \"[*] late-load exit=$?\" >>\"$LOG\"\n"
       "  KSU_READY=0\n"
       "  for i in $(seq 1 50); do\n"

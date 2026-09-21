@@ -7,7 +7,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val appName = "GhostLock"
+val appName = "Wutong-Temporary"
 val appVersionName = "1.1"
 
 val gitVersionCode = runCatching {
@@ -90,7 +90,7 @@ android {
         }
     }
     defaultConfig {
-        applicationId = "com.ghostlock.app"
+        applicationId = "com.Night.painless"
         minSdk = 34
         targetSdk = 37
         versionCode = gitVersionCode

@@ -230,7 +230,8 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
         return try {
             val binary = File(appContext.applicationInfo.nativeLibraryDir, "libghostlock.so")
             require(binary.isFile) { "missing native binary: ${binary.absolutePath}" }
-            if (prepareKsud(workDir, onLog) != null) onLog("ksud ready") else onLog("warning: ksud not found")
+            if (prepareKsud(workDir, onLog) != null) onLog("Night ksud ready") else onLog("warning: Night ksud not found")
+            if (prepareNightKmi(workDir, onLog) != null) onLog("Night KMI ready") else onLog("warning: matching Night KMI not found")
             // the root script creates its log as root, so one name per run
             // keeps the last run's lines out of this run's log
             val ksuLog = File(workDir, "$KsuLogName.${System.currentTimeMillis()}")
@@ -473,7 +474,7 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
     private fun firstValidProperty(vararg keys: String): String? = keys.asSequence().firstNotNullOfOrNull { validDeviceName(systemProperty(it)) }
 
     private fun prepareKsud(workDir: File, onLog: (String) -> Unit): File? {
-        val packages = listOf("me.weishu.kernelsu.pr", "me.weishu.kernelsu", "com.resukisu.resukisu", "com.kowx712.supermanager")
+        val packages = listOf("com.Night.night", "me.weishu.kernelsu.pr", "me.weishu.kernelsu", "com.resukisu.resukisu", "com.kowx712.supermanager")
         var installed = false
         for (packageName in packages) {
             val appInfo = runCatching { appContext.packageManager.getApplicationInfo(packageName, 0) }.getOrNull() ?: continue
@@ -487,8 +488,31 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
                 return output
             }.onFailure { onLog("copy ksud failed: ${it.message}") }
         }
-        if (!installed) onLog("KernelSU/ReSukiSU/KowSU app not installed")
+        if (!installed) onLog("Night/KernelSU/ReSukiSU/KowSU app not installed")
         return null
+    }
+
+    private fun prepareNightKmi(workDir: File, onLog: (String) -> Unit): File? {
+        val release = System.getProperty("os.version", "").orEmpty()
+        val android = Regex("android\\d+").find(release)?.value
+        val kernel = Regex("^(\\d+\\.\\d+)").find(release)?.groupValues?.getOrNull(1)
+        if (android == null || kernel == null) {
+            onLog("cannot determine Night KMI from $release")
+            return null
+        }
+        val name = "${android}-${kernel}_kernelsu.ko"
+        val outputDir = File(workDir, "night-kmi").apply { mkdirs() }
+        val output = File(outputDir, name)
+        return runCatching {
+            appContext.assets.open("night-kmi/$name").use { input ->
+                output.outputStream().use(input::copyTo)
+            }
+            runCatching { Os.chmod(output.absolutePath, 420) }
+            output
+        }.onFailure {
+            output.delete()
+            onLog("Night KMI $android-$kernel is not included")
+        }.getOrNull()
     }
 
     private suspend fun runProcess(

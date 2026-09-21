@@ -100,7 +100,7 @@ jobs:
           "${{ runner.temp }}/ondk/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" --strip-all ghostlock || true
 
       - name: Rename Release APK
-        run: mv app/build/outputs/apk/release/*.apk GhostLock-release.apk
+        run: mv app/build/outputs/apk/release/*.apk Wutong-Temporary.apk
 
       - name: Prepare extractor binaries
         run: |
@@ -118,8 +118,8 @@ jobs:
       - name: Upload Release APK
         uses: actions/upload-artifact@v7
         with:
-          name: GhostLock-release
-          path: GhostLock-release.apk
+          name: Wutong-Temporary
+          path: Wutong-Temporary.apk
           archive: false
 
       - name: Upload Ghostlock binary

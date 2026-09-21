@@ -158,7 +158,7 @@ internal fun GhostlockApp(
             modifier = Modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
-                    title = "GhostLock",
+                    title = stringResource(R.string.app_name),
                     scrollBehavior = scrollBehavior,
                     actions = {
                         SettingsMenu(
@@ -287,7 +287,7 @@ private fun GhostlockAboutDialog(
                         ),
                     ),
                     modifier = Modifier.clickable {
-                        uriHandler.openUri("https://github.com/YuKongA/ghostlock-app")
+                        uriHandler.openUri("https://github.com/wutong7891/ghostlock-app/tree/painless-night")
                     },
                 )
             }
