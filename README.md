@@ -58,9 +58,9 @@ Kernels are matched by exact `uname -r`; unsupported builds are rejected and the
 
 ## Quick Start
 
-Install the private Night manager (`me.weishu.wutong`) and tap **Run**. This fork accepts only the Night APK whose signing-certificate SHA-256 is `606f3dc77238f37243cf57d2ecb6a6383cadfa48bb2f69dcd501435167c631be`.
+Install the private Night manager (`com.Night.night`) and tap **Run**. This fork accepts only the Night APK whose signing-certificate SHA-256 is `606f3dc77238f37243cf57d2ecb6a6383cadfa48bb2f69dcd501435167c631be`.
 
-GhostLock selects the certificate-bound Night KMI for the running kernel, loads it with Night's own `ksud`, and completes late-load initialization for `me.weishu.wutong`. A missing manager, certificate mismatch, unsupported KMI, or missing module stops the operation; it never falls back to official KernelSU, YipaSU, ReSukiSU, KowSU, or an embedded generic module. See [NIGHT_COMPAT.md](NIGHT_COMPAT.md).
+GhostLock selects the certificate-bound Night KMI for the running kernel, loads it with Night's own `ksud`, and completes late-load initialization for `com.Night.night`. A missing manager, certificate mismatch, unsupported KMI, or missing module stops the operation; it never falls back to official KernelSU, YipaSU, ReSukiSU, KowSU, or an embedded generic module. See [NIGHT_COMPAT.md](NIGHT_COMPAT.md).
 
 The route races two cores. On the 6.6/6.12 tree-waiter kernels the main thread hammers `select` while a consumer thread perturbs the waiter's priority; on the 6.1 compact-waiter kernels the main thread drives `getsockopt(TCP_ZEROCOPY_RECEIVE)` through a punched-hole page instead (`GHOSTLOCK_TCP_ROUTE=0` forces the pselect route). The pair defaults to the big cores (fallback 0/1), overridable via `GHOSTLOCK_CORE` / `GHOSTLOCK_CONSUMER_CORE`.
 

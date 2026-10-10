@@ -40,7 +40,7 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
         const val OffsetsFileName = "offsets.json"
         const val KsuLogName = ".ghostlock_ksu.log"
         const val ExtractBinaryName = "libextract.so"
-        const val NightPackage = "me.weishu.wutong"
+        const val NightPackage = "com.Night.night"
         const val NightCertificateSha256 = "606f3dc77238f37243cf57d2ecb6a6383cadfa48bb2f69dcd501435167c631be"
         const val NightModuleName = "night_kernelsu.ko"
     }

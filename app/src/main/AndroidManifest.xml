@@ -3,7 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <queries>
-        <package android:name="me.weishu.wutong" />
+        <package android:name="com.Night.night" />
     </queries>
     <application
         android:name=".GhostlockApplication"
