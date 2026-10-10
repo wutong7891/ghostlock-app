@@ -40,8 +40,9 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
         const val OffsetsFileName = "offsets.json"
         const val KsuLogName = ".ghostlock_ksu.log"
         const val ExtractBinaryName = "libextract.so"
-        const val YipaSuPackage = "com.jinfuwei.luoyu"
-        const val YipaSuModuleName = "yipasu_kernelsu.ko"
+        const val NightPackage = "me.weishu.wutong"
+        const val NightCertificateSha256 = "606f3dc77238f37243cf57d2ecb6a6383cadfa48bb2f69dcd501435167c631be"
+        const val NightModuleName = "night_kernelsu.ko"
     }
 
     private val appContext = context.applicationContext
@@ -234,7 +235,11 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
         return try {
             val binary = File(appContext.applicationInfo.nativeLibraryDir, "libghostlock.so")
             require(binary.isFile) { "missing native binary: ${binary.absolutePath}" }
-            if (prepareKsud(workDir, onLog) != null) onLog("ksud ready") else onLog("warning: ksud not found")
+            if (prepareNightKsud(workDir, onLog) == null) {
+                onLog("error: the certificate-matched Night manager is required")
+                return 2
+            }
+            onLog("Night ksud and certificate-bound KMI ready")
             // the root script creates its log as root, so one name per run
             // keeps the last run's lines out of this run's log
             val ksuLog = File(workDir, "$KsuLogName.${System.currentTimeMillis()}")
@@ -476,58 +481,64 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
 
     private fun firstValidProperty(vararg keys: String): String? = keys.asSequence().firstNotNullOfOrNull { validDeviceName(systemProperty(it)) }
 
-    private fun prepareKsud(workDir: File, onLog: (String) -> Unit): File? {
-        File(workDir, YipaSuModuleName).delete()
-        val packages = listOf(YipaSuPackage, "me.weishu.kernelsu.pr", "me.weishu.kernelsu", "com.resukisu.resukisu", "com.kowx712.supermanager")
-        var installed = false
-        for (packageName in packages) {
-            val appInfo = runCatching { appContext.packageManager.getApplicationInfo(packageName, 0) }.getOrNull() ?: continue
-            installed = true
-            val source = File(appInfo.nativeLibraryDir, "libksud.so")
-            if (!source.isFile) continue
-            val output = File(workDir, "ksud")
-            runCatching {
-                source.inputStream().use { input -> output.outputStream().use { input.copyTo(it) } }
-                runCatching { Os.chmod(output.absolutePath, 448) }
-                if (packageName == YipaSuPackage) prepareYipaSuModule(workDir, onLog)
-                return output
-            }.onFailure { onLog("copy ksud failed: ${it.message}") }
+    private fun prepareNightKsud(workDir: File, onLog: (String) -> Unit): File? {
+        File(workDir, NightModuleName).delete()
+        File(workDir, "ksud").delete()
+        val appInfo = runCatching { appContext.packageManager.getApplicationInfo(NightPackage, 0) }.getOrNull()
+        if (appInfo == null) {
+            onLog("Night manager is not installed: $NightPackage")
+            return null
         }
-        if (!installed) onLog("YipaSU/KernelSU/ReSukiSU/KowSU app not installed")
-        return null
+        val certHash = certificateHash(NightPackage)
+        if (certHash == null) {
+            onLog("Night manager signing certificate could not be read")
+            return null
+        }
+        if (!certHash.equals(NightCertificateSha256, ignoreCase = true)) {
+            onLog("Night manager certificate mismatch: ${certHash.take(12)}")
+            return null
+        }
+        val source = File(appInfo.nativeLibraryDir, "libksud.so")
+        if (!source.isFile) {
+            onLog("Night manager does not contain libksud.so")
+            return null
+        }
+        if (!prepareNightModule(workDir, certHash, onLog)) return null
+        val output = File(workDir, "ksud")
+        return runCatching {
+            source.inputStream().use { input -> output.outputStream().use { input.copyTo(it) } }
+            runCatching { Os.chmod(output.absolutePath, 448) }
+            output
+        }.onFailure { onLog("copy Night ksud failed: ${it.message}") }.getOrNull()
     }
 
-    private fun prepareYipaSuModule(workDir: File, onLog: (String) -> Unit) {
+    private fun prepareNightModule(workDir: File, certHash: String, onLog: (String) -> Unit): Boolean {
         val release = System.getProperty("os.version", "").orEmpty()
         val android = Regex("android\\d+").find(release)?.value
         val kernel = Regex("^(\\d+\\.\\d+)").find(release)?.groupValues?.get(1)
         if (android == null || kernel == null) {
-            onLog("YipaSU detected, but KMI could not be parsed from $release")
-            return
+            onLog("Night detected, but KMI could not be parsed from $release")
+            return false
         }
         val kmi = "$android-$kernel"
-        val certHash = yipaSuCertificateHash()
-        if (certHash == null) {
-            onLog("YipaSU detected, but its signing certificate could not be read")
-            return
-        }
-        val asset = "yipasu-kmi/$certHash/${kmi}_kernelsu.ko"
-        val output = File(workDir, YipaSuModuleName)
-        runCatching {
+        val asset = "night-kmi/$certHash/${kmi}_kernelsu.ko"
+        val output = File(workDir, NightModuleName)
+        return runCatching {
             appContext.assets.open(asset).use { input ->
                 output.outputStream().use { target -> input.copyTo(target) }
             }
             runCatching { Os.chmod(output.absolutePath, 420) }
-            onLog("YipaSU exclusive KMI ready: $kmi (${certHash.take(12)})")
+            onLog("Night exclusive KMI ready: $kmi (${certHash.take(12)})")
+            true
         }.onFailure {
             output.delete()
-            onLog("YipaSU is installed, but this manager signature/KMI pair is not bundled: ${certHash.take(12)}/$kmi")
-        }
+            onLog("Night certificate/KMI pair is not bundled: ${certHash.take(12)}/$kmi")
+        }.getOrDefault(false)
     }
 
-    private fun yipaSuCertificateHash(): String? = runCatching {
+    private fun certificateHash(packageName: String): String? = runCatching {
         val info = appContext.packageManager.getPackageInfo(
-            YipaSuPackage,
+            packageName,
             PackageManager.PackageInfoFlags.of(PackageManager.GET_SIGNING_CERTIFICATES.toLong()),
         )
         val signingInfo = checkNotNull(info.signingInfo)

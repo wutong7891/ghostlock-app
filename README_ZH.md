@@ -58,9 +58,9 @@
 
 ## 快速开始
 
-打开 **GhostLock** 点击 **执行**。需先装 YipaSU（`com.jinfuwei.luoyu`）、KernelSU（`me.weishu.kernelsu`）、ReSukiSU（`com.resukisu.resukisu`）或 KowSU（`com.kowx712.supermanager`）以提供 `ksud`；缺 `ksud` 时 W1/W2 仍可拿到 uid 0，但不会加载模块。
+先安装私有 Night 面具（`me.weishu.wutong`），再打开 **GhostLock** 点击 **执行**。本分支只接受签名证书 SHA-256 为 `606f3dc77238f37243cf57d2ecb6a6383cadfa48bb2f69dcd501435167c631be` 的 Night APK。
 
-本分支优先适配 YipaSU，并内置此前交付版与当前版 YipaSU 3.2.5ksu 的证书绑定 KMI。运行时会计算已安装 YipaSU 的签名证书哈希，按当前设备 KMI 选择完全匹配的模块，使用 YipaSU 自带 `ksud` 加载后，再以 `com.jinfuwei.luoyu` 完成 late-load 初始化。遇到未收录的未来签名时会回退到管理器自身的内置 KMI 逻辑，并在运行日志中明确提示。
+GhostLock 会按当前内核选择与该证书绑定的 Night KMI，使用 Night 自带的 `ksud` 加载，并以 `me.weishu.wutong` 完成 late-load 初始化。未安装 Night、证书不一致、KMI 不受支持或模块缺失时都会直接停止；不会回退到官方 KernelSU、YipaSU、ReSukiSU、KowSU 或通用内置模块。详见 [NIGHT_COMPAT.md](NIGHT_COMPAT.md)。
 
 路线是双核竞争。6.6/6.12 树形 waiter 内核上主线程跑 `select` 爆破、consumer 线程扰动 waiter 优先级；6.1 紧凑 waiter 内核上主线程改走 `getsockopt(TCP_ZEROCOPY_RECEIVE)` 打洞页写入（`GHOSTLOCK_TCP_ROUTE=0` 强制回退 pselect 路线）。核心对默认取大核（不可用时回退 0/1），可用 `GHOSTLOCK_CORE` / `GHOSTLOCK_CONSUMER_CORE` 覆盖。
 
