@@ -58,7 +58,7 @@ Kernels are matched by exact `uname -r`; unsupported builds are rejected and the
 
 ## Quick Start
 
-Install the private Night manager (`com.Night.night`) and tap **Run**. This fork accepts only the Night APK whose signing-certificate SHA-256 is `606f3dc77238f37243cf57d2ecb6a6383cadfa48bb2f69dcd501435167c631be`.
+Install the private Night manager (`com.Night.night`) and tap **Run**. This fork accepts only the current Night APK whose signing-certificate SHA-256 is `adcf2529d856694b572bdae35a3ae211e79a69213cd9bc2180f4d5a8e9296afa`. The Night manager itself no longer bundles KMI modules; GhostLock carries the eight certificate-bound modules.
 
 GhostLock selects the certificate-bound Night KMI for the running kernel, loads it with Night's own `ksud`, and completes late-load initialization for `com.Night.night`. A missing manager, certificate mismatch, unsupported KMI, or missing module stops the operation; it never falls back to official KernelSU, YipaSU, ReSukiSU, KowSU, or an embedded generic module. See [NIGHT_COMPAT.md](NIGHT_COMPAT.md).
 

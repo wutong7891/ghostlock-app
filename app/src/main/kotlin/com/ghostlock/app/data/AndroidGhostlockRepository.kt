@@ -41,7 +41,7 @@ class AndroidGhostlockRepository(context: Context) : GhostlockRepository {
         const val KsuLogName = ".ghostlock_ksu.log"
         const val ExtractBinaryName = "libextract.so"
         const val NightPackage = "com.Night.night"
-        const val NightCertificateSha256 = "606f3dc77238f37243cf57d2ecb6a6383cadfa48bb2f69dcd501435167c631be"
+        const val NightCertificateSha256 = "adcf2529d856694b572bdae35a3ae211e79a69213cd9bc2180f4d5a8e9296afa"
         const val NightModuleName = "night_kernelsu.ko"
     }
 

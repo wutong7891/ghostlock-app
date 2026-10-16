@@ -58,7 +58,7 @@
 
 ## 快速开始
 
-先安装私有 Night 面具（`com.Night.night`），再打开 **GhostLock** 点击 **执行**。本分支只接受签名证书 SHA-256 为 `606f3dc77238f37243cf57d2ecb6a6383cadfa48bb2f69dcd501435167c631be` 的 Night APK。
+先安装私有 Night 面具（`com.Night.night`），再打开 **GhostLock** 点击 **执行**。本分支只接受签名证书 SHA-256 为 `adcf2529d856694b572bdae35a3ae211e79a69213cd9bc2180f4d5a8e9296afa` 的当前 Night APK。Night 面具本身不再内置 KMI；8 套证书绑定 KMI 由 GhostLock 携带。
 
 GhostLock 会按当前内核选择与该证书绑定的 Night KMI，使用 Night 自带的 `ksud` 加载，并以 `com.Night.night` 完成 late-load 初始化。未安装 Night、证书不一致、KMI 不受支持或模块缺失时都会直接停止；不会回退到官方 KernelSU、YipaSU、ReSukiSU、KowSU 或通用内置模块。详见 [NIGHT_COMPAT.md](NIGHT_COMPAT.md)。
 
