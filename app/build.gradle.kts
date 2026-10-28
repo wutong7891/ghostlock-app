@@ -8,7 +8,7 @@ plugins {
 }
 
 val appName = "GhostLock"
-val appVersionName = "1.3-night"
+val appVersionName = "1.4-night"
 
 val gitVersionCode = runCatching {
     providers.exec {
