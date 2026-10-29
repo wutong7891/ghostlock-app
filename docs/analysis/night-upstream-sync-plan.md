@@ -81,5 +81,5 @@ The upstream attack state machine remains `setup -> W1 -> W2 -> W3 -> handoff`. 
 - [x] Merge upstream on an integration branch.
 - [x] Reapply the Night-only compatibility layer.
 - [x] Attempt local verification (blocked by missing local JDK, Cargo, and native build tools; GitHub Actions is the authoritative build gate).
-- [ ] Build with GitHub Actions and inspect the artifact.
+- [x] Build the APK with GitHub Actions and inspect the downloaded artifact (run `40901134273`; APK job succeeded; macOS extractor job was cancelled while queued).
 - [x] Record the device gate as not run by user instruction.

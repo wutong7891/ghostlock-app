@@ -81,5 +81,5 @@ flowchart LR
 - [x] 在集成分支合并上游。
 - [x] 重新应用 Night 专属兼容层。
 - [x] 已尝试本地验证（本机缺少 JDK、Cargo 和原生构建工具；以 GitHub Actions 为最终构建门禁）。
-- [ ] 使用 GitHub Actions 构建并检查产物。
+- [x] 使用 GitHub Actions 构建 APK 并检查下载产物（运行 `40901134273`；APK Job 成功，macOS 提取器 Job 排队后被取消）。
 - [x] 按用户要求记录为未执行真机 gate。
