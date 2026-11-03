@@ -7,6 +7,7 @@
 - 面具包名：`com.Night.night`
 - 面具版本：`g442be83b`
 - 服务器仓库快照：`wutong7891/KernelSU@4d3dc3fc35386f7c9d84fbb4f3ffc378fc8a3638`
+- Ghost 上游同步：`YuKongA/ghostlock-app@b88b70c77918f7226d899f33976533fa639b264f`
 - 服务器面具 APK SHA-256：`9b3e0df21ab34542850bd37becd80e197b3790bbbbbece874b2973e7de0bc243`
 - 面具签名证书 SHA-256：`adcf2529d856694b572bdae35a3ae211e79a69213cd9bc2180f4d5a8e9296afa`
 - 内置 KMI 范围：Android 12/5.10 至 Android 17/6.18

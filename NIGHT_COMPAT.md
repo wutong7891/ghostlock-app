@@ -7,6 +7,7 @@ This GhostLock build is locked to the Night manager currently deployed by the WT
 - Manager package: `com.Night.night`
 - Manager build: `g442be83b`
 - Server repository snapshot: `wutong7891/KernelSU@4d3dc3fc35386f7c9d84fbb4f3ffc378fc8a3638`
+- GhostLock upstream sync: `YuKongA/ghostlock-app@b88b70c77918f7226d899f33976533fa639b264f`
 - Server Manager APK SHA-256: `9b3e0df21ab34542850bd37becd80e197b3790bbbbbece874b2973e7de0bc243`
 - Manager signing-certificate SHA-256: `adcf2529d856694b572bdae35a3ae211e79a69213cd9bc2180f4d5a8e9296afa`
 - Bundled KMI range: Android 12/5.10 through Android 17/6.18
